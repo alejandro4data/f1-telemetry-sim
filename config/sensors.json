@@ -1,0 +1,32 @@
+{
+    "speed": {
+        "id": 256, 
+        "name": "Speed_Kmh",
+        "format": ">f",
+        "unit": "km/h"
+    },
+    "rpm": {
+        "id": 257,
+        "name": "Engine_RPM",
+        "format": ">f",
+        "unit": "rpm"
+    },
+    "brake_temp_fl": {
+        "id": 512,
+        "name": "Brake_Temp_FL",
+        "format": ">f",
+        "unit": "C"
+    },
+    "tyre_pressure_fl": {
+        "id": 768,
+        "name": "Tyre_Press_FL",
+        "format": ">f",
+        "unit": "psi"
+    },
+    "tyre_temp_fl": {
+        "id": 769,
+        "name": "Tyre_Temp_FL",
+        "format": ">f",
+        "unit": "C"
+    }
+}
