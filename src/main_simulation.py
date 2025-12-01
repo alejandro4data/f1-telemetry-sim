@@ -14,7 +14,7 @@ def main():
     
     # 1. Initialize Hardware (CAN Bus)
     try:
-        can_bus = CanInterface(channel='test_bus', interface='virtual')
+        can_bus = CanInterface(channel='224.0.0.1', interface='udp_multicast')
         can_bus.connect()
     except Exception as e:
         print(f"CRITICAL: Could not connect to CAN Bus. {e}")
