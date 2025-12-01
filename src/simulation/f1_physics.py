@@ -116,55 +116,44 @@ class F1CarPhysics:
         # Añadir ruido y vibración a las RPM
         self.rpm = target_rpm + random.uniform(-50, 50)
 
-
-        # --- 5. TERMODINÁMICA (CORRELACIÓN MEJORADA) ---
+# --- 5. TERMODINÁMICA (RE-CALIBRADA) ---
         
         # A) FRENOS: Energía cinética -> Calor
-        # K_heat: Coeficiente de calentamiento (muy alto en F1)
-        if self.g_long < -0.1: # Si estamos frenando
+        if self.g_long < -0.1: 
             energy_input = abs(self.g_long) * self.speed_kmh * 1.5 * dt
             self.brake_temp_fl += energy_input
         
-        # Enfriamiento exponencial (Ley de Newton)
-        # El aire enfría rapidísimo a 300 km/h (conductos de freno)
+        # Enfriamiento de frenos
         cooling_air_flow = 0.05 + (self.speed_kmh * 0.002) 
-        temp_diff = self.brake_temp_fl - 25.0 # Ambiente 25°C
+        temp_diff = self.brake_temp_fl - 25.0 
         self.brake_temp_fl -= temp_diff * cooling_air_flow * dt
-
-        # Color visual (límite físico)
         self.brake_temp_fl = max(25.0, self.brake_temp_fl)
 
-        # B) NEUMÁTICOS: Fricción + Transferencia de Frenos
-        # 1. Calor por rodadura y velocidad (Histéresis)
-        rolling_heat = self.speed_kmh * 0.05 * dt
+        # B) NEUMÁTICOS: Fricción + Transferencia
+        # 1. Calor por rodadura y Fricción
+        rolling_heat = self.speed_kmh * 0.1 * dt
+        scrub_heat = abs(self.g_lat) * 20.0 * dt
         
-        # 2. Calor por carga lateral (Curvas) - Scrubbing
-        scrub_heat = abs(self.g_lat) * 25.0 * dt
-        
-        # 3. Calor por carga longitudinal (Tracción/Frenada)
-        slip_heat = abs(self.g_long) * 10.0 * dt
-        
-        # 4. TRANSFERENCIA TÉRMICA DE FRENOS (La conexión que faltaba)
-        # El calor de los frenos calienta la llanta y el gas del neumático
-        # Si frenos > 600°C, irradia a la goma
+        # 2. TRANSFERENCIA TÉRMICA DE FRENOS (RIM SOAK)
+        # CORRECCIÓN: Reducimos drásticamente el factor de 0.002 a 0.0001
+        # El calor tarda mucho en pasar del disco a la goma (aire aislante)
         rim_soak = 0.0
-        if self.brake_temp_fl > 400:
-            rim_soak = (self.brake_temp_fl - 400) * 0.002 * dt
+        if self.brake_temp_fl > 300:
+            rim_soak = (self.brake_temp_fl - 300) * 0.00015 * dt # Factor reducido x10
         
-        total_heat_in = rolling_heat + scrub_heat + slip_heat + rim_soak
+        total_heat_in = rolling_heat + scrub_heat + rim_soak
         
-        # Enfriamiento por aire (convección superficial)
-        tyre_cooling = (self.tyre_temp_fl - 25.0) * (0.02 + self.speed_kmh * 0.0005) * dt
-        
+        # Enfriamiento neumático
+        tyre_cooling = (self.tyre_temp_fl - 25.0) * (0.05 + self.speed_kmh * 0.001) * dt
         self.tyre_temp_fl += total_heat_in - tyre_cooling
+        self.tyre_temp_fl = max(25.0, self.tyre_temp_fl)
         
-        # C) PRESIÓN (Ley de Gases Ideales)
-        # P = nRT / V -> Asumimos volumen constante
-        # Calibración: 22 PSI a 100°C. 
-        # Por cada 10°C extra, sube aprox 0.8 PSI
+        # C) PRESIÓN (Ley de Gases Ideales - Calibrada)
+        # Base: 22.0 PSI a 100°C.
+        # Sensibilidad: 0.05 PSI por grado (aprox F1 standard)
         base_temp = 100.0
         base_psi = 22.0
-        psi_per_deg = 0.1 # Sensibilidad
+        psi_per_deg = 0.05 # Reducido de 0.1 a 0.05 para ser más estable
         
         delta_t = self.tyre_temp_fl - base_temp
         self.tyre_press_fl = base_psi + (delta_t * psi_per_deg)
